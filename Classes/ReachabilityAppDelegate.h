@@ -3,7 +3,7 @@
 File: ReachabilityAppDelegate.h
 Abstract: The application's controller.
 
-Version: 1.5
+Version: 2.0
 
 Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
 ("Apple") in consideration of your agreement to the following terms, and your
@@ -41,41 +41,30 @@ DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF
 CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Copyright (C) 2008 Apple Inc. All Rights Reserved.
+Copyright (C) 2009 Apple Inc. All Rights Reserved.
 
 */
 
 #import <UIKit/UIKit.h>
-#import "Reachability.h"
 
-@interface ReachabilityAppDelegate : NSObject <UITableViewDataSource, UITableViewDelegate> {
-    IBOutlet UIWindow *window;
-    IBOutlet UIView *contentView;
-    IBOutlet UILabel *summaryLabel;
-	
-	UIImage *carrierDataNetworkImage;
-	UIImage *wiFiImage;
-	UIImage *stopImage;
-	
-	UITableView *tableView;
-	
-	NetworkStatus remoteHostStatus;
-	NetworkStatus internetConnectionStatus;
-	NetworkStatus localWiFiConnectionStatus;
+@class Reachability;
+@interface ReachabilityAppDelegate: NSObject {
+    IBOutlet UIWindow* window;
+    IBOutlet UIView* contentView;
+    IBOutlet UILabel* summaryLabel;
+
+    IBOutlet UITextField* remoteHostLabel;
+    IBOutlet UIImageView* remoteHostIcon;
+    IBOutlet UITextField* remoteHostStatusField;
+    
+    IBOutlet UIImageView* internetConnectionIcon;
+    IBOutlet UITextField* internetConnectionStatusField;
+    
+    IBOutlet UIImageView* localWiFiConnectionIcon;
+    IBOutlet UITextField* localWiFiConnectionStatusField;
+    
+    Reachability* hostReach;
+    Reachability* internetReach;
+    Reachability* wifiReach;
 }
-
-@property (nonatomic, retain) UIWindow *window;
-@property (nonatomic, retain) UIView *contentView;
-@property (nonatomic, retain) UILabel *summaryLabel;
-
-@property (nonatomic, retain) UIImage *carrierDataNetworkImage;
-@property (nonatomic, retain) UIImage *wiFiImage;
-@property (nonatomic, retain) UIImage *stopImage;
-@property (nonatomic, retain) UITableView *tableView;
-@property NetworkStatus remoteHostStatus;
-@property NetworkStatus internetConnectionStatus;
-@property NetworkStatus localWiFiConnectionStatus;
-
-- (void)updateStatus;
-
 @end

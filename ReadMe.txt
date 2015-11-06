@@ -1,89 +1,89 @@
-
 Reachability
 
-===========================================================================
+========================================================================
 DESCRIPTION:
 
-The Reachability sample application demonstrates how to use the System Configuration 
-framework to determine the network state of an iPhone or iPod touch. In particular, 
-it demonstrates how to know when IP traffic might be routed through a carrier 
-data network interface (such as EDGE).
+The Reachability sample application demonstrates how to use the System
+Configuration framework to monitor the network state of an iPhone or
+iPod touch. In particular, it demonstrates how to know when IP can be
+routed and when traffic will be routed through a Wireless Wide Area
+Network (WWAN) interface such as EDGE or 3G.
 
-The Reachability class provides methods to query the state of the network, which tells you
-which network interfaces are available on the device. They return
-one of the values in the NetworkStatus enumeration, which include NotReachable, 
-ReachableViaCarrierDataNetwork, and ReachableViaWiFiNetwork. The availability of network
-interfaces does not tell you if a given host is reachable. For that, the Reachability class
-lets you query the reachability of a given host.
+Note: Reachability cannot tell your application if you can connect to a
+particular host, only that an interface is available that might allow a
+connection, and whether that interface is the WWAN.
 
-The Reachability class operates in two modes: With and without network status changes enabled.
-In the default state, it returns the results of the queries you make synchronously, which tells
-you the state of the device's network interfaces at the time of the query. In the other state,
-Reachability runs asynchronously and will report back changes to the network state and to the
-reachability of remote hosts as those changes happen.
-
-===========================================================================
+========================================================================
 USING THE SAMPLE
 
-Build and run the sample using Xcode. When running the iPhone OS simulator, 
-you can exercise the application by disconnecting the Ethernet cable, turning off 
-AirPort, or by joining an ad-hoc local WiFi network. If running in asychronous mode,
-the application updates to reflect the new network state of the device. If running in
-the default, synchronous mode, you'll have to restart the application in the simulator
-to get it to reflect the new network state.
+Build and run the sample using Xcode. When running the iPhone Simulator,
+you can exercise the application by disconnecting the Ethernet cable,
+turning off AirPort, or by joining an ad-hoc local Wi-Fi network.
 
-By default, the application uses www.apple.com as the remote host to query to determine
-reachability. You can change the host it uses in ReachabilityAppDelegate.m, and you can also
-supply an IP address. To do that comment out the line that includes 
-"[[Reachability sharedReachability] setHostName:[self hostName]]" and uncomment the 
-line that includes "[[Reachability sharedReachability] setAddress:@"0.0.0.0"]", changing
-the IP address to a different one.
+By default, the application uses www.apple.com for its remote host. You
+can change the host it uses in ReachabilityAppDelegate.m by modifying
+the call to [Reachability reachabilityWithHostName] in
+-applicationDidFinishLaunching.
 
-To enable asynchronous network state change notifications, uncomment the line in
-ReachabilityAppDelegate.m that includes [[Reachability sharedReachability] setNetworkStatusNotificationsEnabled:YES];
+IMPORTANT: Reachability must use DNS to resolve the host name before it
+can determine the Reachability of that host, and this may take time on
+certain network connections.  Because of this, the API will return
+NotReachable until name resolution has completed.  This delay may be
+visible in the interface on some networks.
 
-===========================================================================
+The Reachability sample demonstrates the asynchronous use of the
+SCNetworkReachability API. You can use the API synchronously, but do not
+issue a synchronous check by hostName on the main thread. If the device
+cannot reach a DNS server or is on a slow network, a synchronous call to
+the SCNetworkReachabilityGetFlags function can block for up to 30
+seconds trying to resolve the hostName. If this happens on the main
+thread, the application watchdog will kill the application after 20
+seconds of inactivity.
+
+SCNetworkReachability API's do not currently provide a means to detect
+support for GameKit Peer To Peer networking over BlueTooth.
+
+========================================================================
 BUILD REQUIREMENTS
 
-Mac OS X 10.5.3, Xcode 3.1, iPhone OS 2.0
+iPhone OS 3.0
 
-===========================================================================
+========================================================================
 RUNTIME REQUIREMENTS
 
-Mac OS X 10.5.3, iPhone OS 2.0
+iPhone OS 3.0
 
-===========================================================================
+========================================================================
 PACKAGING LIST
 
-Reachability.h
-Reachability.m
-SystemConfiguration framework wrapper.
+Reachability.h Reachability.m -Basic demonstration of how to use the
+SystemConfiguration Reachablity APIs.
 
-ReachabilityAppDelegate.h
-ReachabilityAppDelegate.m
-Class that is the application's controller.
+ReachabilityAppDelegate.h ReachabilityAppDelegate.m -The application's
+controller.
 
-ReachabilityTableCell.h
-ReachabilityTableCell.m
-Custom table cell.
-
-===========================================================================
+========================================================================
 CHANGES FROM PREVIOUS VERSIONS
 
-Version 1.5
+Version 2.0 
+-Greatly simplified UI code.
+-Rewrote Reachability object to be fully asychronous and simplify
+monitoring of multiple SCNetworkReachabilityRefs.
+-Added code showing how to monitor wether a connection will be required.
+
+Version 1.5 
 - Updated for and tested with iPhone OS 2.0. First public release.
 
-Version 1.4
+Version 1.4 
 - Updated for Beta 7.
 
-Version 1.3
-- Updated for Beta 6.
-- Added LSRequiresIPhoneOS key to Info.plist.
+Version 1.3 
+- Updated for Beta 6. - Added LSRequiresIPhoneOS key to Info.plist.
 
 Version 1.2
 - Updated for Beta 4. Added code signing.
 
-Version 1.1
+Version 1.1 
 - Updated for Beta 3 to use a nib file.
 
-Copyright (C)2008 Apple Inc. All rights reserved.
+Copyright (C)2009 Apple Inc. All rights reserved.

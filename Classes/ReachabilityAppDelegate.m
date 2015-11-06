@@ -3,7 +3,7 @@
 File: ReachabilityAppDelegate.m
 Abstract: The application's controller.
 
-Version: 1.5
+Version: 2.0
 
 Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
 ("Apple") in consideration of your agreement to the following terms, and your
@@ -41,241 +41,117 @@ DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF
 CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Copyright (C) 2008 Apple Inc. All Rights Reserved.
+Copyright (C) 2009 Apple Inc. All Rights Reserved.
 
 */
 
 #import "ReachabilityAppDelegate.h"
-
-@interface ReachabilityAppDelegate()
-- (void)updateCarrierDataNetworkWarning;
-- (void)addTable;
-- (NSString *)hostName;
-@end
+#import "Reachability.h"
 
 @implementation ReachabilityAppDelegate
 
-typedef enum {
-	RemoteHostReachableSection = 0,
-	InternetConnectionSection,
-	ComputerToComputerSection
-} TableViewSections;
-
-@synthesize window;
-@synthesize contentView;
-@synthesize summaryLabel;
-@synthesize carrierDataNetworkImage;
-@synthesize wiFiImage;
-@synthesize stopImage;
-@synthesize tableView;
-@synthesize remoteHostStatus;
-@synthesize internetConnectionStatus;
-@synthesize localWiFiConnectionStatus;
-
-- (void)dealloc {
-    [contentView release];
-    [summaryLabel release];
-    [window release];
-    [super dealloc];
+- (void) configureTextField: (UITextField*) textField imageView: (UIImageView*) imageView reachability: (Reachability*) curReach
+{
+    NetworkStatus netStatus = [curReach currentReachabilityStatus];
+    BOOL connectionRequired= [curReach connectionRequired];
+    NSString* statusString= @"";
+    switch (netStatus)
+    {
+        case NotReachable:
+        {
+            statusString = @"Access Not Available";
+            imageView.image = [UIImage imageNamed: @"stop-32.png"] ;
+            //Minor interface detail- connectionRequired may return yes, even when the host is unreachable.  We cover that up here...
+            connectionRequired= NO;  
+            break;
+        }
+            
+        case ReachableViaWWAN:
+        {
+            statusString = @"Reachable WWAN";
+            imageView.image = [UIImage imageNamed: @"WWAN5.png"];
+            break;
+        }
+        case ReachableViaWiFi:
+        {
+             statusString= @"Reachable WiFi";
+            imageView.image = [UIImage imageNamed: @"Airport.png"];
+            break;
+      }
+    }
+    if(connectionRequired)
+    {
+        statusString= [NSString stringWithFormat: @"%@, Connection Required", statusString];
+    }
+    textField.text= statusString;
 }
 
-- (void)applicationDidFinishLaunching:(UIApplication *)application 
+- (void) updateInterfaceWithReachability: (Reachability*) curReach
+{
+    if(curReach == hostReach)
+	{
+		[self configureTextField: remoteHostStatusField imageView: remoteHostIcon reachability: curReach];
+        NetworkStatus netStatus = [curReach currentReachabilityStatus];
+        BOOL connectionRequired= [curReach connectionRequired];
+
+        summaryLabel.hidden = (netStatus != ReachableViaWWAN);
+        NSString* baseLabel=  @"";
+        if(connectionRequired)
+        {
+            baseLabel=  @"Cellular data network is available.\n  Internet traffic will be routed through it after a connection is established.";
+        }
+        else
+        {
+            baseLabel=  @"Cellular data network is active.\n  Internet traffic will be routed through it.";
+        }
+        summaryLabel.text= baseLabel;
+    }
+	if(curReach == internetReach)
+	{	
+		[self configureTextField: internetConnectionStatusField imageView: internetConnectionIcon reachability: curReach];
+	}
+	if(curReach == wifiReach)
+	{	
+		[self configureTextField: localWiFiConnectionStatusField imageView: localWiFiConnectionIcon reachability: curReach];
+	}
+	
+}
+
+//Called by Reachability whenever status changes.
+- (void) reachabilityChanged: (NSNotification* )note
+{
+	Reachability* curReach = [note object];
+	NSParameterAssert([curReach isKindOfClass: [Reachability class]]);
+	[self updateInterfaceWithReachability: curReach];
+}
+
+
+- (void) applicationDidFinishLaunching: (UIApplication* )application 
 {	
-	
-	/*
-     You can use the Reachability class to check the reachability of a remote host
-     by specifying either the host's DNS name (www.apple.com) or by IP address.
-     */
-	[[Reachability sharedReachability] setHostName:[self hostName]];
-	//[[Reachability sharedReachability] setAddress:@"0.0.0.0"];
-	
-	// The Reachability class is capable of notifying your application when the network
-	// status changes. By default, those notifications are not enabled.
-	// Uncomment the following line to enable them:
-	//[[Reachability sharedReachability] setNetworkStatusNotificationsEnabled:YES];
+	contentView.backgroundColor = [UIColor groupTableViewBackgroundColor];
     
-	self.carrierDataNetworkImage = [UIImage imageNamed:@"WWAN5.png"];
-	self.wiFiImage = [UIImage imageNamed:@"Airport.png"];
-	self.stopImage = [UIImage imageNamed:@"stop-32.png"];
-	
-	[self addTable];
-	[self updateStatus];
-	[self updateCarrierDataNetworkWarning];
-	
-	[self.window makeKeyAndVisible];
+    summaryLabel.hidden = YES;        
     
+
     // Observe the kNetworkReachabilityChangedNotification. When that notification is posted, the
     // method "reachabilityChanged" will be called. 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:@"kNetworkReachabilityChangedNotification" object:nil];
-}
+    [[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(reachabilityChanged:) name: kReachabilityChangedNotification object: nil];
 
-- (void)reachabilityChanged:(NSNotification *)note
-{
-    [self updateStatus];
-}
-
-- (void)updateStatus
-{
-	// Query the SystemConfiguration framework for the state of the device's network connections.
-	self.remoteHostStatus           = [[Reachability sharedReachability] remoteHostStatus];
-	self.internetConnectionStatus	= [[Reachability sharedReachability] internetConnectionStatus];
-	self.localWiFiConnectionStatus	= [[Reachability sharedReachability] localWiFiConnectionStatus];
+    //Change the host name here to change the server your monitoring
+    remoteHostLabel.text = [NSString stringWithFormat: @"Remote Host: %@", @"www.apple.com"];
+	hostReach = [[Reachability reachabilityWithHostName: @"www.apple.com"] retain];
+	[hostReach startNotifer];
+	[self updateInterfaceWithReachability: hostReach];
 	
-	[tableView reloadData];
-}
+    internetReach = [[Reachability reachabilityForInternetConnection] retain];
+	[internetReach startNotifer];
+	[self updateInterfaceWithReachability: internetReach];
 
-- (BOOL)isCarrierDataNetworkActive
-{
-	return (self.remoteHostStatus == ReachableViaCarrierDataNetwork);
-}
+    wifiReach = [[Reachability reachabilityForLocalWiFi] retain];
+	[wifiReach startNotifer];
+	[self updateInterfaceWithReachability: wifiReach];
 
-- (NSString *)hostName
-{
-	// Don't include a scheme. 'http://' will break the reachability checking.
-	// Change this value to test the reachability of a different host.
-	return @"www.apple.com";
-}
-
-- (NSString *)hostNameLabel
-{
-	return [NSString stringWithFormat:@"Remote Host: %@", [self hostName]];
-}
-
-- (void)configureTableCell:(UITableViewCell *)cell forIndexPath:(NSIndexPath *)path inTable:(UITableView *)table
-{
-	NSUInteger row = path.row;
-	
-	cell.font = [UIFont systemFontOfSize:12.0];
-	cell.textColor = [UIColor darkGrayColor];
-	cell.textAlignment = UITextAlignmentLeft;
-	
-	/*
-     Table 1:
-     Remote Host Reachable
-     Not reachable | Reachable via EDGE | Reachable via WiFi
-     
-     Table 2:
-     Connection to Internet
-     Not available | Available via EDGE | Available via WiFi
-     
-     Table 3:
-     Connection to Local Network.
-     Not available | Available via WiFi
-     */
-	
-	if (path.section == RemoteHostReachableSection) {
-		
-		if (self.remoteHostStatus == NotReachable) {
-			cell.text = @"Cannot Connect To Remote Host.";
-			cell.image = self.stopImage;
-		} else if (self.remoteHostStatus == ReachableViaCarrierDataNetwork) {
-			cell.text = @"Reachable Via Carrier Data Network.";
-			cell.image = self.carrierDataNetworkImage;
-		} else if (self.remoteHostStatus == ReachableViaWiFiNetwork) {
-			cell.text = @"Reachable Via WiFi Network.";
-			cell.image = self.wiFiImage;
-		}
-	}
-	
-	if (path.section == InternetConnectionSection) {
-		if (self.internetConnectionStatus == NotReachable) {
-			cell.text = @"Access Not Available.";
-			cell.image = self.stopImage;
-		} else if (self.internetConnectionStatus == ReachableViaCarrierDataNetwork) {
-			cell.text = @"Available Via Carrier Data Network.";
-			cell.image = self.carrierDataNetworkImage;
-		} else if (self.internetConnectionStatus == ReachableViaWiFiNetwork) {
-			cell.text = @"Available Via WiFi Network.";
-			cell.image = self.wiFiImage;
-		}
-	}
-	
-	if (path.section == ComputerToComputerSection) {
-		
-		if (self.localWiFiConnectionStatus == NotReachable) {
-			cell.text = @"Access Not Available.";
-			cell.image = self.stopImage;
-		} else if (self.localWiFiConnectionStatus == ReachableViaWiFiNetwork) {
-			cell.text = @"Available Via WiFi Network.";
-			cell.image = self.wiFiImage;
-		}
-	}
-}
-
-- (void)addTable
-{
-	CGRect tableFrame = [[UIScreen mainScreen] applicationFrame];
-	
-	tableView = [[UITableView alloc] initWithFrame:tableFrame style:UITableViewStyleGrouped];
-	[tableView setAutoresizingMask:(UIViewAutoresizingFlexibleWidth |UIViewAutoresizingFlexibleHeight)];
-	tableView.delegate = self;
-	tableView.dataSource = self;
-	tableView.rowHeight = 44.0;
-	tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-	tableView.sectionHeaderHeight = 28.0;
-	tableView.scrollEnabled = NO;
-	
-	[self.contentView insertSubview:tableView belowSubview:summaryLabel];
-    [self.contentView bringSubviewToFront:summaryLabel];
-	[tableView reloadData];
-	[tableView autorelease];	
-}
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
-{
-	return 3;
-}
-
-- (NSInteger)tableView:(UITableView *)table numberOfRowsInSection:(NSInteger)section
-{
-	return 1;
-}
-
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
-{
-	if (section == 0) {
-		return [self hostNameLabel];
-	}
-	if (section == 1) {
-		return @"Access To Internet Hosts";
-	}
-	if (section == 2) {
-		return @"Access To Local Bonjour Hosts";
-	}
-	return @"Unknown";
-}
-
-- (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-	// Disable row selection.
-	return nil;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)theTableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+	[window makeKeyAndVisible];
     
-    static NSString *ReachabilityTableCellIdentifier = @"ReachabilityTableCell";
-    UITableViewCell *cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:ReachabilityTableCellIdentifier];
-	if (cell == nil) {
-		cell = [[[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:ReachabilityTableCellIdentifier] autorelease];
-	}
-    
-	[self configureTableCell:cell forIndexPath:indexPath inTable:theTableView];
-	
-	return cell;
 }
-
-- (UIFont *)statusKeyLabelFont
-{
-	return [UIFont systemFontOfSize:12.0];
-}
-
-- (void)updateCarrierDataNetworkWarning
-{
-	if ([self isCarrierDataNetworkActive]) {
-		summaryLabel.hidden = NO;
-	} else {
-		summaryLabel.hidden = YES;        
-    }
-}
-
 @end
