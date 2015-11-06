@@ -3,7 +3,7 @@
 File: ReachabilityAppDelegate.m
 Abstract: The application's controller.
 
-Version: 2.0
+Version: 2.2
 
 Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
 ("Apple") in consideration of your agreement to the following terms, and your
@@ -41,7 +41,7 @@ DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF
 CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Copyright (C) 2009 Apple Inc. All Rights Reserved.
+Copyright (C) 2010 Apple Inc. All Rights Reserved.
 
 */
 
@@ -127,7 +127,8 @@ Copyright (C) 2009 Apple Inc. All Rights Reserved.
 
 
 - (void) applicationDidFinishLaunching: (UIApplication* )application 
-{	
+{
+    #pragma unused(application)
 	contentView.backgroundColor = [UIColor groupTableViewBackgroundColor];
     
     summaryLabel.hidden = YES;        
@@ -140,15 +141,15 @@ Copyright (C) 2009 Apple Inc. All Rights Reserved.
     //Change the host name here to change the server your monitoring
     remoteHostLabel.text = [NSString stringWithFormat: @"Remote Host: %@", @"www.apple.com"];
 	hostReach = [[Reachability reachabilityWithHostName: @"www.apple.com"] retain];
-	[hostReach startNotifer];
+	[hostReach startNotifier];
 	[self updateInterfaceWithReachability: hostReach];
 	
     internetReach = [[Reachability reachabilityForInternetConnection] retain];
-	[internetReach startNotifer];
+	[internetReach startNotifier];
 	[self updateInterfaceWithReachability: internetReach];
 
     wifiReach = [[Reachability reachabilityForLocalWiFi] retain];
-	[wifiReach startNotifer];
+	[wifiReach startNotifier];
 	[self updateInterfaceWithReachability: wifiReach];
 
 	[window makeKeyAndVisible];

@@ -46,28 +46,35 @@ support for GameKit Peer To Peer networking over BlueTooth.
 ========================================================================
 BUILD REQUIREMENTS
 
-iPhone OS 3.0
+iOS 4.0
 
 ========================================================================
 RUNTIME REQUIREMENTS
 
-iPhone OS 3.0
+iOS 4.0
 
 ========================================================================
 PACKAGING LIST
 
-Reachability.h Reachability.m -Basic demonstration of how to use the
-SystemConfiguration Reachablity APIs.
+Reachability.h Reachability.m 
+-Basic demonstration of how to use the SystemConfiguration Reachablity APIs.
 
-ReachabilityAppDelegate.h ReachabilityAppDelegate.m -The application's
-controller.
+ReachabilityAppDelegate.h ReachabilityAppDelegate.m 
+-The application's controller.
 
 ========================================================================
 CHANGES FROM PREVIOUS VERSIONS
+Version 2.2
+-Updated sample for iOS 4.0
+
+Version 2.1
+-Removed [super init] from class method.
+-Fixed spelling error in method names.
+-Fixed several warnings.
 
 Version 2.0 
 -Greatly simplified UI code.
--Rewrote Reachability object to be fully asychronous and simplify
+-Rewrote Reachability object to be fully asychronous and simplify.
 monitoring of multiple SCNetworkReachabilityRefs.
 -Added code showing how to monitor wether a connection will be required.
 
@@ -86,4 +93,4 @@ Version 1.2
 Version 1.1 
 - Updated for Beta 3 to use a nib file.
 
-Copyright (C)2009 Apple Inc. All rights reserved.
+Copyright (C) Apple Inc. All rights reserved.
